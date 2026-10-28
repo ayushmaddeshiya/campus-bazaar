@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Bazaar - Auth</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .hidden { display: none; }
+        .alert { padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; display: none; }
+        .alert-error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-left">
+            <h1>Campus <span style="color: #4da6ff;">Bazaar</span></h1>
+            <h2 style="margin-top: 20px; font-size: 36px;">Your Campus.<br>Your Marketplace.</h2>
+            <p style="margin-top: 15px; font-size: 18px;">Buy and sell pre-owned items with fellow students.</p>
+        </div>
+        
+        <div class="login-right">
+            <div class="login-box">
+                
+                <div id="alertBox" class="alert"></div>
+
+                <!-- LOGIN FORM -->
+                <div id="loginFormContainer">
+                    <h2 style="text-align: center; margin-bottom: 20px;">Login</h2>
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label>University Email</label>
+                            <input type="email" id="loginEmail" placeholder="you@ce.du.ac.in" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                        </div>
+                        <button type="submit" class="btn-primary">Login</button>
+                    </form>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <a href="#" id="showSignup" style="color: #0066cc; text-decoration: none;">Need an account? Sign Up</a>
+                    </div>
+                </div>
+
+                <!-- SIGN UP FORM -->
+                <div id="signupFormContainer" class="hidden">
+                    <h2 style="text-align: center; margin-bottom: 20px;">Create Account</h2>
+                    <form id="signupForm">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="signupName" placeholder="Your Name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>University Email</label>
+                            <input type="email" id="signupEmail" placeholder="you@ce.du.ac.in" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="signupPassword" placeholder="Create a password" required>
+                        </div>
+                        <button type="submit" class="btn-primary">Sign Up</button>
+                    </form>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <a href="#" id="showLogin" style="color: #0066cc; text-decoration: none;">Already have an account? Login</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle between Login and Signup Forms
+        document.getElementById('showSignup').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('loginFormContainer').classList.add('hidden');
+            document.getElementById('signupFormContainer').classList.remove('hidden');
+            hideAlert();
+        });
+
+        document.getElementById('showLogin').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('signupFormContainer').classList.add('hidden');
+            document.getElementById('loginFormContainer').classList.remove('hidden');
+            hideAlert();
+        });
+
+        function showAlert(msg, isError) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = msg;
+            alertBox.style.display = 'block';
+            alertBox.className = isError ? 'alert alert-error' : 'alert alert-success';
+        }
+
+        function hideAlert() {
+            document.getElementById('alertBox').style.display = 'none';
+        }
+
+        // Handle Sign Up
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+
+            try {
+                const res = await fetch('/api/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+                const data = await res.json();
+                
+                if (!res.ok) throw new Error(data.error);
+                
+                showAlert(data.message, false);
+                document.getElementById('signupForm').reset();
+                setTimeout(() => document.getElementById('showLogin').click(), 2000);
+            } catch (err) {
+                showAlert(err.message, true);
+            }
+        });
+
+        // Handle Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                
+                if (!res.ok) throw new Error(data.error);
+                
+                // If successful, redirect to dashboard
+                window.location.href = '/dashboard';
+            } catch (err) {
+                showAlert(err.message, true);
+            }
+        });
+    </script>
+</body>
+</html>

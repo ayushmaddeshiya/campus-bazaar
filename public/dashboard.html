@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Bazaar - Marketplace</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="sidebar-logo">Campus <span style="color: #0066cc;">Bazaar</span></div>
+            <a href="#" class="nav-item active">🏠 Home / Browse</a>
+            <a href="#" class="nav-item">🏷️ My Listings</a>
+            <a href="#" class="nav-item">❤️ My Purchases</a>
+            <a href="#" class="nav-item">💬 Messages <span style="background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px; margin-left: 5px;">2</span></a>
+            <a href="#" class="nav-item">👤 Profile</a>
+            
+            <div style="margin-top: 30px; padding: 0 20px; font-weight: bold; color: #888;">Categories</div>
+            <a href="#" class="nav-item">📚 Books & Notes</a>
+            <a href="#" class="nav-item">💻 Electronics</a>
+            <a href="#" class="nav-item">🪑 Furniture</a>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <input type="text" class="search-bar" placeholder="Search for products, categories...">
+                <div class="user-profile">
+                    <strong>Ayush Maddeshiya</strong><br>
+                    <span style="font-size: 12px; color: #666;">ayush.m@ce.du.ac.in</span>
+                </div>
+            </div>
+
+            <!-- Dynamic Content (Marketplace Screen 2 shown by default) -->
+            <div class="content-area">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2>Trade within your campus</h2>
+                    <button class="btn-primary" style="width: auto; padding: 10px 20px;">+ Sell an Item</button>
+                </div>
+                
+                <div class="product-grid" id="product-container">
+                    <!-- Products will be injected via JS -->
+                    <div class="product-card">
+                        <div style="height: 150px; background: #eee; border-radius: 8px; margin-bottom: 10px;"></div>
+                        <span style="font-size: 12px; color: #888;">Electronics</span>
+                        <h3>Casio FX-991EX Calculator</h3>
+                        <div class="price">₹ 950</div>
+                        <span class="badge-available">● Available</span>
+                    </div>
+                    
+                    <div class="product-card">
+                        <div style="height: 150px; background: #eee; border-radius: 8px; margin-bottom: 10px;"></div>
+                        <span style="font-size: 12px; color: #888;">Books & Notes</span>
+                        <h3>Database System Concepts</h3>
+                        <div class="price">₹ 450</div>
+                        <span class="badge-available">● Available</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/js/app.js"></script>
+</body>
+</html>

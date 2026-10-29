@@ -6,3 +6,5 @@ node_modules/
 
 # Ignore Mac system files (just in case a teammate uses Mac)
 .DS_Store
+
+uploads/

@@ -124,27 +124,30 @@
         });
 
         // Handle Login
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
 
-            try {
-                const res = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await res.json();
-                
-                if (!res.ok) throw new Error(data.error);
-                
-                // If successful, redirect to dashboard
-                window.location.href = '/dashboard';
-            } catch (err) {
-                showAlert(err.message, true);
-            }
+    try {
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
         });
+        const data = await res.json();
+        
+        if (!res.ok) throw new Error(data.error);
+        
+        // Save the JWT token to the browser
+        localStorage.setItem('token', data.token);
+        
+        // Redirect to dashboard
+        window.location.href = '/dashboard';
+    } catch (err) {
+        showAlert(err.message, true);
+    }
+});
     </script>
 </body>
 </html>

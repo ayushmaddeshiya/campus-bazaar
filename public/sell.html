@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sell an Item - Campus Bazaar</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .form-container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        input, textarea, select { width: 100%; padding: 10px; margin: 8px 0 16px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #0056b3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        button:hover { background: #004494; }
+        .row { display: flex; gap: 15px; }
+        .col { flex: 1; }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <h2>List an Item for Sale</h2>
+        <form id="sellForm">
+            <label>Product Name</label>
+            <input type="text" id="productName" required>
+
+            <div class="row">
+                <div class="col">
+                    <label>Category</label>
+                    <select id="categoryId" required>
+                        <option value="1">Books & Notes</option>
+                        <option value="2">Electronics</option>
+                        <option value="3">Furniture</option>
+                        <option value="4">Clothing</option>
+                        <option value="5">Sports & Fitness</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <label>Selling Price (₹)</label>
+                    <input type="number" id="sellingPrice" step="0.01" required>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <label>Condition</label>
+                    <select id="conditionStatus" required>
+                        <option value="New">New</option>
+                        <option value="Lightly Used">Lightly Used</option>
+                        <option value="Good">Good</option>
+                        <option value="Fair">Fair</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <label>Usage Duration</label>
+                    <input type="text" id="usageDuration" placeholder="e.g., 1 Semester" required>
+                </div>
+            </div>
+
+            <label>Approximate Purchase Date</label>
+            <input type="text" id="purchaseDateApprox" placeholder="e.g., August 2025" required>
+
+            <label>Description</label>
+            <textarea id="description" rows="3" required></textarea>
+
+            <label>Defect Details (if any)</label>
+            <textarea id="defectDetails" rows="2" placeholder="e.g., None"></textarea>
+
+            <label>Upload Product Image</label>
+            <input type="file" id="productImage" accept="image/*" required>
+
+            <button type="submit">List Item</button>
+        </form>
+        <p id="statusMessage" style="text-align:center; margin-top:15px; color:green;"></p>
+    </div>
+
+    <script>
+        document.getElementById('sellForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                alert("You must be logged in to sell items.");
+                window.location.href = '/';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('categoryId', document.getElementById('categoryId').value);
+            formData.append('productName', document.getElementById('productName').value);
+            formData.append('description', document.getElementById('description').value);
+            formData.append('purchaseDateApprox', document.getElementById('purchaseDateApprox').value);
+            formData.append('usageDuration', document.getElementById('usageDuration').value);
+            formData.append('sellingPrice', document.getElementById('sellingPrice').value);
+            formData.append('conditionStatus', document.getElementById('conditionStatus').value);
+            formData.append('defectDetails', document.getElementById('defectDetails').value);
+            formData.append('productImage', document.getElementById('productImage').files[0]);
+
+            try {
+                const response = await fetch('/api/products', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('statusMessage').innerText = "Item listed successfully!";
+                    document.getElementById('sellForm').reset();
+                } else {
+                    alert(data.error);
+                }
+            } catch (err) {
+                console.error('Upload failed:', err);
+                alert("An error occurred during upload.");
+            }
+        });
+    </script>
+</body>
+</html>

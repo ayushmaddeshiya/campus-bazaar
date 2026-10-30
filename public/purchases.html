@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Purchases - Campus Bazaar</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; margin: 0; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .request-card { display: flex; gap: 15px; border-bottom: 1px solid #eee; padding: 15px 0; align-items: center; }
+        .request-card:last-child { border-bottom: none; }
+        .request-card img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
+        .details { flex: 1; }
+        .status { font-weight: bold; padding: 6px 12px; border-radius: 4px; font-size: 12px; }
+        .status.Pending { background: #fff3cd; color: #856404; }
+        .status.Accepted { background: #d4edda; color: #155724; }
+        .status.Declined { background: #f8d7da; color: #721c24; }
+        .back-link { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #0066cc; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div style="max-width: 800px; margin: 0 auto;">
+        <a href="/dashboard" class="back-link">← Back to Dashboard</a>
+    </div>
+
+    <div class="container">
+        <h2 style="margin-top: 0;">My Purchase Requests</h2>
+        <div id="purchases-container">
+            <p>Loading your requests...</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/purchases', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error("Failed to fetch purchases");
+                
+                const purchases = await response.json();
+                const container = document.getElementById('purchases-container');
+                container.innerHTML = '';
+
+                if (purchases.length === 0) {
+                    container.innerHTML = '<p style="color: #666;">You have not requested to buy any items yet.</p>';
+                    return;
+                }
+
+                purchases.forEach(req => {
+                    const imageHtml = req.ImagePath 
+                        ? `<img src="${req.ImagePath}" alt="${req.ProductName}">` 
+                        : `<div style="width:80px; height:80px; background:#eee; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#999;">No Image</div>`;
+                    
+                    container.innerHTML += `
+                        <div class="request-card">
+                            ${imageHtml}
+                            <div class="details">
+                                <h3 style="margin: 0 0 5px 0; color: #333;">${req.ProductName}</h3>
+                                <div style="color: #0066cc; font-weight: bold; margin-bottom: 5px;">₹ ${req.SellingPrice}</div>
+                                <div style="font-size: 13px; color: #666;"><strong>Seller:</strong> ${req.SellerName}</div>
+                            </div>
+                            <div>
+                                <span class="status ${req.RequestStatus}">${req.RequestStatus}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error(err);
+                document.getElementById('purchases-container').innerHTML = '<p style="color: red;">Error loading purchase requests.</p>';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -198,10 +198,9 @@ app.get('/api/products/:id', authenticateToken, (req, res) => {
     });
 });
 
-// Add this to your --- PAGE ROUTES --- section at the bottom:
-app.get('/product', (req, res) => res.sendFile(path.join(__dirname, 'public', 'product.html')));
-
 // --- PAGE ROUTES ---
+app.get('/product', (req, res) => res.sendFile(path.join(__dirname, 'public', 'product.html')));
+app.get('/purchases', (req, res) => res.sendFile(path.join(__dirname, 'public', 'purchases.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
 app.get('/sell', (req, res) => res.sendFile(path.join(__dirname, 'public', 'sell.html')));

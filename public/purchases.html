@@ -5,80 +5,89 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Purchases - Campus Bazaar</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; margin: 0; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .request-card { display: flex; gap: 15px; border-bottom: 1px solid #eee; padding: 15px 0; align-items: center; }
-        .request-card:last-child { border-bottom: none; }
-        .request-card img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
-        .details { flex: 1; }
-        .status { font-weight: bold; padding: 6px 12px; border-radius: 4px; font-size: 12px; }
-        .status.Pending { background: #fff3cd; color: #856404; }
-        .status.Accepted { background: #d4edda; color: #155724; }
-        .status.Declined { background: #f8d7da; color: #721c24; }
-        .back-link { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #0066cc; font-weight: bold; }
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; }
+        .dashboard-container { display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: white; border-right: 1px solid #ddd; padding: 20px; box-sizing: border-box; }
+        .sidebar-logo { font-size: 20px; font-weight: bold; margin-bottom: 30px; }
+        .nav-item { display: block; padding: 10px 15px; color: #333; text-decoration: none; border-radius: 5px; margin-bottom: 5px; font-weight: 500; }
+        .nav-item:hover, .nav-item.active { background: #e6f0fa; color: #0066cc; }
+        .main-content { flex: 1; padding: 30px; box-sizing: border-box; }
+        .request-card { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-accepted { background: #d4edda; color: #155724; }
+        .status-declined { background: #f8d7da; color: #721c24; }
+        .btn-chat { background: #0066cc; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        @media(max-width: 768px) { .dashboard-container { flex-direction: column; } .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #ddd; } }
     </style>
 </head>
 <body>
-
-    <div style="max-width: 800px; margin: 0 auto;">
-        <a href="/dashboard" class="back-link">← Back to Dashboard</a>
-    </div>
-
-    <div class="container">
-        <h2 style="margin-top: 0;">My Purchase Requests</h2>
-        <div id="purchases-container">
-            <p>Loading your requests...</p>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="sidebar-logo">Campus <span style="color: #0066cc;">Bazaar</span></div>
+            <a href="/dashboard" class="nav-item">🏠 Home / Browse</a>
+            <a href="/sell" class="nav-item">➕ Sell an Item</a>
+            <a href="/my-listings" class="nav-item">🏷️ My Listings</a>
+            <a href="/purchases" class="nav-item active">❤️ My Purchases</a>
+            <a href="/profile" class="nav-item">👤 Profile</a>
+            <a href="#" onclick="logout()" class="nav-item" style="margin-top: 30px; color: #dc3545;">🚪 Logout</a>
+        </div>
+        <div class="main-content">
+            <h2>Items I Want to Buy</h2>
+            <div id="purchases-list">Loading...</div>
         </div>
     </div>
-
     <script>
         document.addEventListener("DOMContentLoaded", async () => {
             const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = '/';
-                return;
-            }
+            if (!token) { window.location.href = '/'; return; }
 
             try {
-                const response = await fetch('/api/purchases', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (!response.ok) throw new Error("Failed to fetch purchases");
+                const res = await fetch('/api/purchases', { headers: { 'Authorization': `Bearer ${token}` }});
+                const purchases = await res.json();
+                const container = document.getElementById('purchases-list');
                 
-                const purchases = await response.json();
-                const container = document.getElementById('purchases-container');
-                container.innerHTML = '';
-
                 if (purchases.length === 0) {
-                    container.innerHTML = '<p style="color: #666;">You have not requested to buy any items yet.</p>';
+                    container.innerHTML = "<p>You haven't sent any interest requests yet.</p>";
                     return;
                 }
 
-                purchases.forEach(req => {
-                    const imageHtml = req.ImagePath 
-                        ? `<img src="${req.ImagePath}" alt="${req.ProductName}">` 
-                        : `<div style="width:80px; height:80px; background:#eee; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#999;">No Image</div>`;
-                    
+                container.innerHTML = '';
+                purchases.forEach(p => {
+                    let badgeClass = p.RequestStatus === 'Accepted' ? 'status-accepted' : (p.RequestStatus === 'Declined' ? 'status-declined' : 'status-pending');
+                    let chatButton = p.RequestStatus === 'Accepted' 
+                        ? `<button class="btn-chat" onclick="openChat(${p.ProductID}, ${p.SellerID})">💬 Chat with Seller</button>` 
+                        : '';
+
                     container.innerHTML += `
                         <div class="request-card">
-                            ${imageHtml}
-                            <div class="details">
-                                <h3 style="margin: 0 0 5px 0; color: #333;">${req.ProductName}</h3>
-                                <div style="color: #0066cc; font-weight: bold; margin-bottom: 5px;">₹ ${req.SellingPrice}</div>
-                                <div style="font-size: 13px; color: #666;"><strong>Seller:</strong> ${req.SellerName}</div>
-                            </div>
                             <div>
-                                <span class="status ${req.RequestStatus}">${req.RequestStatus}</span>
+                                <h3 style="margin: 0 0 5px 0;">${p.ProductName}</h3>
+                                <p style="margin: 0; color: #666;">Seller: ${p.SellerName} • Price: ₹${p.SellingPrice}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="status-badge ${badgeClass}" style="margin-bottom: 10px; display: inline-block;">${p.RequestStatus}</div>
+                                <br>${chatButton}
                             </div>
                         </div>
                     `;
                 });
-            } catch (err) {
-                console.error(err);
-                document.getElementById('purchases-container').innerHTML = '<p style="color: red;">Error loading purchase requests.</p>';
+            } catch (e) {
+                document.getElementById('purchases-list').innerHTML = "<p>Error loading purchases.</p>";
             }
         });
+
+        async function openChat(productId, sellerId) {
+            const token = localStorage.getItem('token');
+            const res = await fetch('/api/conversations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ productId, sellerId })
+            });
+            const data = await res.json();
+            window.location.href = `/chat?conversationId=${data.conversationId}`;
+        }
+        function logout() { localStorage.removeItem('token'); window.location.href = '/'; }
     </script>
 </body>
 </html>

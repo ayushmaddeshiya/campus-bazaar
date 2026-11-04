@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Listings - Campus Bazaar</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; }
+        .dashboard-container { display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: white; border-right: 1px solid #ddd; padding: 20px; box-sizing: border-box; }
+        .sidebar-logo { font-size: 20px; font-weight: bold; margin-bottom: 30px; }
+        .nav-item { display: block; padding: 10px 15px; color: #333; text-decoration: none; border-radius: 5px; margin-bottom: 5px; font-weight: 500; }
+        .nav-item:hover, .nav-item.active { background: #e6f0fa; color: #0066cc; }
+        .main-content { flex: 1; padding: 30px; box-sizing: border-box; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; margin-top: 20px; }
+        .product-card { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 8px; transition: transform 0.2s; display: flex; flex-direction: column; justify-content: space-between;}
+        .product-card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .btn-requests { margin-top: 10px; width: 100%; padding: 8px; background: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-requests:hover { background: #004d99; }
+        .requests-container { margin-top: 10px; display: none; background: #f9f9f9; padding: 10px; border-radius: 5px; font-size: 13px; border: 1px solid #eee; }
+        .request-item { border-bottom: 1px solid #ddd; padding: 8px 0; }
+        .request-item:last-child { border-bottom: none; }
+        .action-btn { border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold; color: white; margin-left: 5px; }
+        .btn-accept { background: #28a745; }
+        .btn-decline { background: #dc3545; }
+        .btn-chat { background: #17a2b8; margin-top: 5px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Unified Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="sidebar-logo">Campus <span style="color: #0066cc;">Bazaar</span></div>
+            <a href="/dashboard" class="nav-item">🏠 Home / Browse</a>
+            <a href="/sell" class="nav-item">➕ Sell an Item</a>
+            <a href="/my-listings" class="nav-item active">🏷️ My Listings</a>
+            <a href="/purchases" class="nav-item">❤️ My Purchases</a>
+            <a href="/profile" class="nav-item">👤 Profile</a>
+            <a href="#" onclick="logout()" class="nav-item" style="margin-top: 30px; color: #dc3545;">🚪 Logout</a>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <h2>My Product Listings</h2>
+            <p style="color: #666;">Manage your inventory and respond to buyer requests.</p>
+            
+            <div class="product-grid" id="my-product-container">
+                <p>Loading your listings...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/my-products', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const products = await response.json();
+                const container = document.getElementById('my-product-container');
+                
+                container.innerHTML = '';
+
+                if (products.length === 0) {
+                    container.innerHTML = '<p style="color: #666; margin-top: 20px;">You haven\'t listed any items for sale yet. <a href="/sell" style="color: #0066cc;">Sell an item now</a></p>';
+                    return;
+                }
+
+                products.forEach(product => {
+                    const imageStyle = product.ImagePath 
+                        ? `background: url('${product.ImagePath}') center/cover no-repeat;` 
+                        : `background: #eee;`;
+
+                    const card = `
+                        <div class="product-card">
+                            <div onclick="window.location.href='/product?id=${product.ProductID}'" style="cursor: pointer;">
+                                <div style="aspect-ratio: 1 / 1; border-radius: 8px; margin-bottom: 10px; ${imageStyle}"></div>
+                                <span style="font-size: 12px; color: #888;">${product.CategoryName}</span>
+                                <h3 style="margin: 5px 0; font-size: 16px;">${product.ProductName}</h3>
+                                <div style="font-weight: bold; color: #0066cc;">₹ ${product.SellingPrice}</div>
+                                <span style="font-size: 12px; color: ${product.Status === 'Available' ? 'green' : '#d9534f'}; font-weight: bold;">● ${product.Status}</span>
+                            </div>
+                            
+                            <!-- THIS IS THE BLUE BUTTON TO VIEW REQUESTS -->
+                            <button class="btn-requests" onclick="toggleRequests(${product.ProductID})">View Buyer Requests</button>
+                            <div id="requests-${product.ProductID}" class="requests-container"></div>
+                        </div>
+                    `;
+                    container.innerHTML += card;
+                });
+
+            } catch (err) {
+                console.error('Failed to load my listings:', err);
+                document.getElementById('my-product-container').innerHTML = '<p style="color: red;">Error loading your listings.</p>';
+            }
+        });
+
+        // Fetch and display incoming requests for a specific product
+        async function toggleRequests(productId) {
+            const token = localStorage.getItem('token');
+            const reqBox = document.getElementById(`requests-${productId}`);
+            
+            if (reqBox.style.display === 'block') {
+                reqBox.style.display = 'none';
+                return;
+            }
+
+            reqBox.style.display = 'block';
+            reqBox.innerHTML = '<span style="color: #888;">Loading requests...</span>';
+
+            try {
+                const res = await fetch(`/api/products/${productId}/requests`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const requests = await res.json();
+
+                if (requests.length === 0) {
+                    reqBox.innerHTML = '<span style="color: #666;">No buyer requests yet.</span>';
+                    return;
+                }
+
+                let html = '<strong>Requests:</strong><div style="margin-top:5px;">';
+                requests.forEach(req => {
+                    html += `
+                        <div class="request-item">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong>${req.BuyerName}</strong>
+                                ${req.RequestStatus === 'Pending' ? `
+                                    <div>
+                                        <button class="action-btn btn-accept" onclick="respondRequest(${req.RequestID}, 'Accepted')">Accept</button>
+                                        <button class="action-btn btn-decline" onclick="respondRequest(${req.RequestID}, 'Declined')">Decline</button>
+                                    </div>
+                                ` : `<span style="color: ${req.RequestStatus === 'Accepted' ? 'green' : 'red'}; font-weight: bold;">${req.RequestStatus}</span>`}
+                            </div>
+                            <div style="color: #666; font-style: italic; margin-top: 3px;">"${req.Message}"</div>
+                            ${req.RequestStatus === 'Accepted' ? `
+                                <button class="action-btn btn-chat" onclick="startChat(${productId}, ${req.BuyerID})">💬 Message Buyer</button>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                reqBox.innerHTML = html;
+
+            } catch (err) {
+                console.error(err);
+                reqBox.innerHTML = '<span style="color: red;">Failed to load requests.</span>';
+            }
+        }
+
+        async function respondRequest(requestId, status) {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`/api/interest/${requestId}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status })
+                });
+
+                if (res.ok) {
+                    alert(`Request has been ${status}!`);
+                    window.location.reload();
+                } else {
+                    alert('Failed to update request status.');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function startChat(productId, buyerId) {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch('/api/conversations', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ productId, buyerId })
+                });
+                
+                const data = await res.json();
+                if (data.conversationId) {
+                    window.location.href = `/chat?conversationId=${data.conversationId}`;
+                } else {
+                    alert('Could not start chat.');
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        function logout() {
+            const isConfirmed = confirm("Are you sure you want to log out?");
+            if (isConfirmed) {
+                localStorage.removeItem('token');
+                window.location.href = '/';
+            }
+        }
+    </script>
+</body>
+</html>

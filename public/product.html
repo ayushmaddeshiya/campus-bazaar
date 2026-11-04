@@ -13,9 +13,23 @@
         h1 { margin: 0; font-size: 24px; color: #333; }
         .price { font-size: 28px; font-weight: bold; color: #0066cc; }
         .badge { display: inline-block; padding: 4px 8px; background: #eee; border-radius: 4px; font-size: 12px; font-weight: bold; color: #555; }
-        .btn { padding: 12px; background: #28a745; color: white; text-align: center; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: auto; }
+        .btn { padding: 12px; background: #28a745; color: white; text-align: center; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: auto; width: 100%; box-sizing: border-box; }
         .btn:hover { background: #218838; }
+        .btn-edit { background: #007bff; margin-bottom: 10px; }
+        .btn-edit:hover { background: #0056b3; }
+        .btn-delete { background: #dc3545; margin-top: 0; }
+        .btn-delete:hover { background: #c82333; }
         .back-link { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #0066cc; font-weight: bold; }
+
+        /* Modal Styles for Editing */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-cancel { background: #6c757d; }
+        .btn-cancel:hover { background: #5a6268; }
     </style>
 </head>
 <body>
@@ -25,11 +39,68 @@
     </div>
 
     <div class="container" id="product-container">
-        <!-- Content will load here -->
         <p>Loading product details...</p>
     </div>
 
+    <!-- Edit Product Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-content">
+            <h2 style="margin-top: 0;">Edit Listing</h2>
+            <form id="editForm">
+                <div class="form-group">
+                    <label>Product Name</label>
+                    <input type="text" id="editName" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="editCategory" required>
+                        <option value="1">Books & Notes</option>
+                        <option value="2">Electronics</option>
+                        <option value="3">Furniture</option>
+                        <option value="4">Clothing</option>
+                        <option value="5">Sports & Fitness</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Selling Price (₹)</label>
+                    <input type="number" id="editPrice" required>
+                </div>
+                <div class="form-group">
+                    <label>Condition</label>
+                    <select id="editCondition" required>
+                        <option value="New">New</option>
+                        <option value="Lightly Used">Lightly Used</option>
+                        <option value="Good">Good</option>
+                        <option value="Fair">Fair</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Usage Duration</label>
+                    <input type="text" id="editUsage" placeholder="e.g., 6 months">
+                </div>
+                <div class="form-group">
+                    <label>Purchase Date (Approx)</label>
+                    <input type="text" id="editPurchaseDate" placeholder="e.g., Aug 2023">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="editDescription" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Defect Details (Optional)</label>
+                    <textarea id="editDefects" rows="2"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
+        let currentProductData = {}; // Store data to pre-fill the form
+
         document.addEventListener("DOMContentLoaded", async () => {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -37,7 +108,6 @@
                 return;
             }
 
-            // Get product ID from URL (e.g., /product?id=5)
             const urlParams = new URLSearchParams(window.location.search);
             const productId = urlParams.get('id');
 
@@ -53,9 +123,23 @@
 
                 if (!response.ok) throw new Error("Failed to fetch product");
                 const product = await response.json();
+                
+                currentProductData = product; // Save globally for the edit modal
 
                 const imageUrl = product.images.length > 0 ? product.images[0] : '';
                 
+                let actionButtons = '';
+                if (product.isOwner) {
+                    actionButtons = `
+                        <div style="margin-top: auto;">
+                            <button class="btn btn-edit" onclick="openEditModal()">Edit Listing</button>
+                            <button class="btn btn-delete" onclick="deleteItem(${product.ProductID})">Delete Listing</button>
+                        </div>
+                    `;
+                } else {
+                    actionButtons = `<button class="btn" onclick="requestItem(${product.ProductID})">Express Interest to Buy</button>`;
+                }
+
                 document.getElementById('product-container').innerHTML = `
                     <div class="image-section">
                         ${imageUrl ? `<img src="${imageUrl}" alt="${product.ProductName}">` : `<div style="height:300px; background:#eee; display:flex; align-items:center; justify-content:center; border-radius:8px;">No Image</div>`}
@@ -78,7 +162,7 @@
                             ${product.DefectDetails ? `<p style="margin: 10px 0 0 0; font-size: 14px; color: #d9534f;"><strong>Defects:</strong> ${product.DefectDetails}</p>` : ''}
                         </div>
 
-                        <button class="btn" onclick="requestItem(${product.ProductID})">Express Interest to Buy</button>
+                        ${actionButtons}
                     </div>
                 `;
             } catch (err) {
@@ -87,8 +171,109 @@
             }
         });
 
-        function requestItem(id) {
-            alert("This will insert a row into the InterestRequests table!");
+        // Modal Controls
+        function openEditModal() {
+            document.getElementById('editName').value = currentProductData.ProductName;
+            document.getElementById('editCategory').value = currentProductData.CategoryID;
+            document.getElementById('editPrice').value = currentProductData.SellingPrice;
+            document.getElementById('editCondition').value = currentProductData.ConditionStatus;
+            document.getElementById('editUsage').value = currentProductData.UsageDuration || '';
+            document.getElementById('editPurchaseDate').value = currentProductData.PurchaseDateApprox || '';
+            document.getElementById('editDescription').value = currentProductData.Description || '';
+            document.getElementById('editDefects').value = currentProductData.DefectDetails || '';
+            
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        // Handle Edit Form Submission
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = localStorage.getItem('token');
+            const productId = currentProductData.ProductID;
+
+            const updatedData = {
+                productName: document.getElementById('editName').value,
+                categoryId: document.getElementById('editCategory').value,
+                sellingPrice: document.getElementById('editPrice').value,
+                conditionStatus: document.getElementById('editCondition').value,
+                usageDuration: document.getElementById('editUsage').value,
+                purchaseDateApprox: document.getElementById('editPurchaseDate').value,
+                description: document.getElementById('editDescription').value,
+                defectDetails: document.getElementById('editDefects').value
+            };
+
+            try {
+                const response = await fetch(`/api/products/${productId}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify(updatedData)
+                });
+
+                if (response.ok) {
+                    alert("Listing updated successfully!");
+                    window.location.reload(); // Refresh to show updated details
+                } else {
+                    const result = await response.json();
+                    alert("Failed to update: " + result.error);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("An error occurred while updating.");
+            }
+        });
+
+        async function requestItem(id) {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch('/api/interest', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ productId: id, message: "I am interested in buying this item!" })
+                });
+                
+                const result = await response.json();
+                if (response.ok) {
+                    alert("Your interest request has been sent to the seller!");
+                } else {
+                    alert("Error: " + result.error);
+                }
+            } catch (err) {
+                console.error("Error sending request:", err);
+                alert("Failed to send request.");
+            }
+        }
+
+        async function deleteItem(id) {
+            if (!confirm("Are you sure you want to delete this listing? This action cannot be undone.")) return;
+            
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(`/api/products/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    alert("Listing deleted successfully.");
+                    window.location.href = '/my-listings';
+                } else {
+                    const result = await response.json();
+                    alert("Error deleting listing: " + result.error);
+                }
+            } catch (err) {
+                console.error("Error deleting listing:", err);
+                alert("Failed to delete listing.");
+            }
         }
     </script>
 </body>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Campus Bazaar</title>
+    <style>
+        :root { --primary: #003d82; --secondary: #0056b3; --bg: #f0f2f5; --text: #333; }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); }
+        
+        /* Top Navigation */
+        .navbar { background: var(--primary); padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .logo { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .nav-links a { color: white; text-decoration: none; margin-left: 25px; font-weight: 500; opacity: 0.9; }
+        .nav-links a:hover { opacity: 1; }
+
+        /* Main Layout */
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 2.5fr 1fr; gap: 25px; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 25px; }
+        
+        /* Profile Header */
+        .cover { height: 160px; background: linear-gradient(135deg, #e0f2fe 0%, #f8fafc 100%); position: relative; overflow: hidden; }
+        .cover::after { content: ''; position: absolute; width: 200%; height: 200%; top: -50%; left: -50%; background: radial-gradient(circle, rgba(0,86,179,0.05) 10%, transparent 20%); background-size: 20px 20px; }
+        
+        .profile-info { text-align: center; padding: 0 30px 25px; margin-top: -60px; position: relative; z-index: 2; }
+        .avatar-wrapper { display: inline-block; position: relative; }
+        
+        /* Avatar Image */
+        .avatar-img { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 5px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: 0 auto; display: block; background: #e0f2fe; }
+        .online-dot { position: absolute; bottom: 8px; right: 8px; width: 16px; height: 16px; background: #28a745; border: 3px solid white; border-radius: 50%; }
+        
+        .name { font-size: 26px; font-weight: 700; margin: 15px 0 5px; color: var(--primary); }
+        .email { color: #666; margin: 0 0 12px; font-size: 15px; }
+        .badge-verified { background: #e0f2fe; color: var(--secondary); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 25px; border-top: 1px solid #f0f0f0; border-bottom: 1px solid #f0f0f0; background: #fafbfc; text-align: center; }
+        .stat-item h3 { margin: 0 0 5px; font-size: 22px; color: var(--primary); font-weight: 700; }
+        .stat-item p { margin: 0; font-size: 12px; color: #777; font-weight: 600; text-transform: uppercase; }
+
+        /* Action Buttons */
+        .action-buttons { display: flex; gap: 15px; padding: 25px; }
+        .btn { flex: 1; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; text-align: center; text-decoration: none; transition: 0.2s; font-size: 15px; border: none; }
+        .btn-outline { background: white; border: 2px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: #f8f9fa; }
+        .btn-solid { background: var(--primary); color: white; }
+        .btn-solid:hover { background: #002d62; }
+
+        /* Recent Activities */
+        .section-header { padding: 25px 25px 15px; font-size: 18px; font-weight: 700; margin: 0; color: var(--primary); }
+        .activity-list { list-style: none; padding: 0; margin: 0; }
+        .activity-item { padding: 15px 25px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #444; }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-time { color: #888; font-size: 12px; }
+
+        /* Right Column Widgets */
+        .widget-box { padding: 20px; }
+        .widget-title { font-size: 16px; font-weight: 700; margin: 0 0 15px; color: var(--primary); }
+        .rec-item { display: flex; gap: 10px; margin-bottom: 15px; }
+        .rec-img { width: 60px; height: 60px; background: #eee; border-radius: 6px; object-fit: cover; }
+        .rec-details h4 { margin: 0 0 5px; font-size: 14px; }
+        .rec-details p { margin: 0; font-size: 12px; color: #666; }
+        
+        @media(max-width: 900px) { .container { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">🛍️ Campus Bazaar</div>
+        <div class="nav-links">
+            <a href="/dashboard">Home</a>
+            <a href="/my-listings">My Listings</a>
+            <a href="/purchases">My Purchases</a>
+            <a href="/sell">Sell</a>
+            <a href="#" onclick="logout()">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Left Column: Main Profile -->
+        <div class="main-column">
+            <div class="card">
+                <div class="cover" id="coverImage" style="cursor: pointer; background-size: cover; background-position: center;" title="Click to change cover photo">
+                    <input type="file" id="bgImageInput" accept="image/*" style="display: none;">
+                </div>
+                <div class="profile-info">
+                    
+                    <!-- CLICKABLE IMAGE UPLOAD SECTION -->
+                    <div class="avatar-wrapper">
+                        <img id="profileImage" src="https://via.placeholder.com/110?text=User" alt="Profile" class="avatar-img" title="Click to change profile picture" onerror="this.src='https://via.placeholder.com/110?text=User'">
+                        <div class="online-dot"></div>
+                        <input type="file" id="profilePicInput" accept="image/*" style="display: none;">
+                    </div>
+                    
+                    <h1 class="name" id="user-name">Loading...</h1>
+                    <p class="email" id="user-email">Please wait...</p>
+                    <div class="badge-verified">✓ Verified Institution</div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <h3 id="stat-active">0</h3>
+                        <p>Active Listings</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3 id="stat-sent">0</h3>
+                        <p>Requests Sent</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3 id="stat-received">0</h3>
+                        <p>Requests Received</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3 id="stat-trades">0</h3>
+                        <p>Trades Completed</p>
+                    </div>
+                </div>
+
+                <div class="section-header">Recent Activities</div>
+                <ul class="activity-list">
+                    <li class="activity-item">
+                        <span>📱 Listed a new item in Electronics</span>
+                        <span class="activity-time">Just now</span>
+                    </li>
+                    <li class="activity-item">
+                        <span>❤️ Expressed interest in "Database Concepts"</span>
+                        <span class="activity-time">2 days ago</span>
+                    </li>
+                </ul>
+
+                <div class="action-buttons">
+                    <button class="btn btn-outline" onclick="alert('!')">Edit Profile</button>
+                    <button class="btn btn-solid" onclick="window.location.href='/sell'">List New Item</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Recommendations -->
+        <div class="side-column">
+            <div class="card widget-box">
+                <h3 class="widget-title">Recommended Products</h3>
+                <div class="rec-item">
+                    <div class="rec-img"></div>
+                    <div class="rec-details">
+                        <h4>Casio Calculator</h4>
+                        <p>₹ 850 • Available</p>
+                    </div>
+                </div>
+                <div class="rec-item">
+                    <div class="rec-img"></div>
+                    <div class="rec-details">
+                        <h4>Engineering Drawing Kit</h4>
+                        <p>₹ 400 • Available</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline" style="width: 100%; padding: 8px; margin-top: 10px;" onclick="window.location.href='/dashboard'">Load more</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/';
+                return;
+            }
+
+            try {
+                // 1. Fetch User Info
+                const userResponse = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!userResponse.ok) throw new Error("Not authorized");
+                const userData = await userResponse.json();
+                
+                document.getElementById('user-name').innerText = userData.user.name;
+                document.getElementById('user-email').innerText = userData.user.email;
+                
+                // Set Profile and Background Images if they exist in database
+                if (userData.user.ProfilePicture) {
+                    document.getElementById('profileImage').src = userData.user.ProfilePicture;
+                }
+                if (userData.user.BackgroundImage) {
+                    document.getElementById('coverImage').style.backgroundImage = `url('${userData.user.BackgroundImage}')`;
+                }
+
+                // 2. Fetch Profile Stats
+                const statsResponse = await fetch('/api/profile/stats', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (statsResponse.ok) {
+                    const stats = await statsResponse.json();
+                    document.getElementById('stat-active').innerText = stats.activeListings || 0;
+                    document.getElementById('stat-sent').innerText = stats.requestsSent || 0;
+                    document.getElementById('stat-received').innerText = stats.requestsReceived || 0;
+                    document.getElementById('stat-trades').innerText = stats.tradesCompleted || 0;
+                }
+
+            } catch (err) {
+                console.error(err);
+                localStorage.removeItem('token');
+                window.location.href = '/';
+            }
+        });
+
+        function logout() {
+            const isConfirmed = confirm("Are you sure want to log out?");
+            if (isConfirmed) {
+                localStorage.removeItem('token');
+                window.location.href = '/';
+            }
+        }
+    </script>
+
+    <!-- AUTO-UPLOAD SCRIPT FOR IMAGES -->
+    <script>
+        // Cover Image Upload Handler
+        document.getElementById('coverImage').addEventListener('click', (e) => {
+            if(e.target.id !== 'bgImageInput') {
+                document.getElementById('bgImageInput').click();
+            }
+        });
+
+        document.getElementById('bgImageInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const token = localStorage.getItem('token');
+            const formData = new FormData();
+            formData.append('bgImage', file);
+
+            document.getElementById('coverImage').style.opacity = '0.7';
+
+            try {
+                const response = await fetch('/api/profile/images', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const imgUrl = URL.createObjectURL(file);
+                    document.getElementById('coverImage').style.backgroundImage = `url('${imgUrl}')`;
+                    document.getElementById('coverImage').style.opacity = '1';
+                } else {
+                    const data = await response.json();
+                    document.getElementById('coverImage').style.opacity = '1';
+                    alert(data.error);
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('coverImage').style.opacity = '1';
+                alert("Cover upload failed.");
+            }
+        });
+
+        // Profile Image Upload Handler
+        document.getElementById('profileImage').addEventListener('click', () => {
+            document.getElementById('profilePicInput').click();
+        });
+
+        document.getElementById('profilePicInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const token = localStorage.getItem('token');
+            const formData = new FormData();
+            formData.append('profilePic', file);
+
+            document.getElementById('profileImage').style.opacity = '0.5';
+
+            try {
+                const response = await fetch('/api/profile/images', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('profileImage').src = URL.createObjectURL(file);
+                    document.getElementById('profileImage').style.opacity = '1';
+                } else {
+                    document.getElementById('profileImage').style.opacity = '1';
+                    alert(data.error);
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('profileImage').style.opacity = '1';
+                alert("Upload failed. Please try again.");
+            }
+        });
+    </script>
+</body>
+</html>

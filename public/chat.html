@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - Campus Bazaar</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #e5ddd5; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        .header { background: #003d82; color: white; padding: 15px; display: flex; align-items: center; gap: 15px; }
+        .header a { color: white; text-decoration: none; font-weight: bold; font-size: 18px; }
+        .chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { max-width: 75%; padding: 10px 15px; border-radius: 15px; font-size: 15px; line-height: 1.4; position: relative; }
+        .msg-other { background: white; align-self: flex-start; border-bottom-left-radius: 0; }
+        .msg-mine { background: #dcf8c6; align-self: flex-end; border-bottom-right-radius: 0; }
+        .sender-name { font-size: 11px; font-weight: bold; color: #0066cc; margin-bottom: 3px; display: block; }
+        .input-area { background: #f0f0f0; padding: 15px; display: flex; gap: 10px; }
+        .input-area input { flex: 1; padding: 12px; border-radius: 20px; border: 1px solid #ccc; outline: none; }
+        .input-area button { background: #0066cc; color: white; border: none; padding: 0 20px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/dashboard">← Back</a>
+        <h3 style="margin: 0;">Secure Chat</h3>
+    </div>
+    <div class="chat-box" id="chat-box">Loading messages...</div>
+    <div class="input-area">
+        <input type="text" id="msg-input" placeholder="Type a message..." onkeypress="if(event.key === 'Enter') sendMsg()">
+        <button onclick="sendMsg()">Send</button>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const conversationId = urlParams.get('conversationId');
+        const token = localStorage.getItem('token');
+        let currentUserId = null;
+
+        if (!token || !conversationId) window.location.href = '/dashboard';
+
+        // Parse token to know which messages are "mine" vs "theirs"
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            currentUserId = payload.userId;
+        } catch(e) {}
+
+        async function loadMessages() {
+            const res = await fetch(`/api/conversations/${conversationId}/messages`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const msgs = await res.json();
+            const box = document.getElementById('chat-box');
+            
+            // Only scroll to bottom if new messages appeared
+            const isAtBottom = box.scrollHeight - box.clientHeight <= box.scrollTop + 10;
+            
+            box.innerHTML = '';
+            msgs.forEach(m => {
+                const isMine = m.SenderID === currentUserId;
+                box.innerHTML += `
+                    <div class="msg ${isMine ? 'msg-mine' : 'msg-other'}">
+                        ${!isMine ? `<span class="sender-name">${m.SenderName}</span>` : ''}
+                        ${m.MessageText}
+                    </div>
+                `;
+            });
+
+            if (isAtBottom) box.scrollTop = box.scrollHeight;
+        }
+
+        async function sendMsg() {
+            const input = document.getElementById('msg-input');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            input.value = '';
+            await fetch(`/api/conversations/${conversationId}/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ text })
+            });
+            loadMessages();
+        }
+
+        // Auto-refresh the chat every 2 seconds
+        loadMessages();
+        setInterval(loadMessages, 2000);
+    </script>
+</body>
+</html>

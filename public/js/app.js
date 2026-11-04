@@ -60,10 +60,10 @@ async function loadProducts(token) {
                 ? `background: url('${product.ImagePath}') center/cover no-repeat;` 
                 : `background: #eee;`;
 
-            // ADDED onclick routing right here:
+            // Card features onclick routing and Ankit's responsive aspect-ratio styling
             const card = `
                 <div class="product-card" onclick="window.location.href='/product?id=${product.ProductID}'" style="cursor: pointer; border: 1px solid #ddd; padding: 10px; border-radius: 8px; transition: transform 0.2s;">
-                    <div style="height: 150px; border-radius: 8px; margin-bottom: 10px; ${imageStyle}"></div>
+                    <div style="aspect-ratio: 1 / 1; border-radius: 8px; margin-bottom: 10px; ${imageStyle}"></div>
                     <span style="font-size: 12px; color: #888;">${product.CategoryName}</span>
                     <h3 style="margin: 5px 0;">${product.ProductName}</h3>
                     <div class="price" style="font-weight: bold; color: #0066cc;">₹ ${product.SellingPrice}</div>
